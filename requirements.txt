@@ -1,0 +1,10 @@
+streamlit>=1.35.0
+langchain>=0.2.0
+langchain-groq>=0.1.6
+langchain-community>=0.2.0
+langchain-experimental>=0.0.60
+tavily-python>=0.3.3
+pymupdf4llm>=0.0.17
+pandas>=2.0.0
+openpyxl>=3.1.0
+python-dotenv>=1.0.0
