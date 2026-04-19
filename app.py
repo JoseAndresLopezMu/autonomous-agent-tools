@@ -157,7 +157,7 @@ GROQ_MODELS = {
 }
 
 EXAMPLES = [
-    "¿Cuál es el precio actual del oro?",
+    "Precio del oro hoy en dólares",
     "¿Qué tiempo hace en Madrid ahora mismo?",
     "Calcula los primeros 20 números de Fibonacci",
     "Busca las últimas noticias sobre inteligencia artificial",

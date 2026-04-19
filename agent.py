@@ -91,16 +91,22 @@ def run_agent_stream(executor: AgentExecutor, user_input: str, chat_history=None
             or "failed_generation" in err
         )
         if _retry and groq_tool_error:
-            # Retry telling the model to answer directly without tools
-            direct_prompt = (
-                f"{user_input}\n\n"
-                "(Responde directamente desde tu conocimiento sin usar herramientas externas.)"
-            )
-            try:
-                result = executor.invoke({"input": direct_prompt, "chat_history": chat_history})
-                yield {"type": "final", "output": result.get("output", str(result))}
-            except Exception as e2:
-                yield {"type": "error", "output": f"Error: {e2}"}
+            # First retry: same query without retry flag (transient Groq failures)
+            retry_events = list(run_agent_stream(executor, user_input, chat_history=chat_history, _retry=False))
+            retry_failed = all(ev["type"] == "error" for ev in retry_events)
+            if not retry_failed:
+                yield from retry_events
+            else:
+                # Final fallback: answer directly without tools
+                direct_prompt = (
+                    f"{user_input}\n\n"
+                    "(Responde directamente desde tu conocimiento sin usar herramientas externas.)"
+                )
+                try:
+                    result = executor.invoke({"input": direct_prompt, "chat_history": chat_history})
+                    yield {"type": "final", "output": result.get("output", str(result))}
+                except Exception as e2:
+                    yield {"type": "error", "output": f"Error: {e2}"}
         else:
             yield {"type": "error", "output": f"Error en el agente: {e}"}
 
