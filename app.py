@@ -179,7 +179,7 @@ with st.sidebar:
     model_label = st.selectbox(
         "modelo",
         list(GROQ_MODELS.keys()),
-        index=1,
+        index=0,
         label_visibility="collapsed",
     )
     selected_model = GROQ_MODELS[model_label]
