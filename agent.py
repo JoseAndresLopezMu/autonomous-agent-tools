@@ -17,11 +17,11 @@ Tienes acceso a estas herramientas:
 - get_weather: obtiene el tiempo actual de una ciudad
 
 REGLAS:
-1. Usa SIEMPRE get_weather si preguntan por el tiempo o clima de cualquier ciudad — nunca respondas sin llamar a la herramienta.
-2. Usa SIEMPRE web_search para precios actuales, noticias de hoy o cualquier dato que cambie con el tiempo.
+1. Si ya sabes la respuesta con certeza desde tu entrenamiento, responde DIRECTAMENTE sin usar herramientas.
+2. Usa web_search SOLO para datos en tiempo real: precios, noticias de hoy, eventos recientes.
 3. Usa python_repl para cálculos numéricos, nunca calcules mentalmente.
-4. Usa read_file solo cuando el usuario haya subido un archivo.
-5. Para preguntas de conocimiento general que NO requieren datos actuales (historia, conceptos, fórmulas), responde directamente sin herramientas.
+4. Usa get_weather SIEMPRE que pregunten por el tiempo meteorológico de cualquier ciudad. Nunca respondas sobre el tiempo sin llamar a esta herramienta.
+5. Usa read_file solo cuando el usuario haya subido un archivo.
 6. Responde siempre en el mismo idioma que el usuario.
 7. Si piden tabla o comparativa, usa formato tabla markdown (| col | col |).
 
@@ -91,22 +91,16 @@ def run_agent_stream(executor: AgentExecutor, user_input: str, chat_history=None
             or "failed_generation" in err
         )
         if _retry and groq_tool_error:
-            # First retry: same query without retry flag (transient Groq failures)
-            retry_events = list(run_agent_stream(executor, user_input, chat_history=chat_history, _retry=False))
-            retry_failed = all(ev["type"] == "error" for ev in retry_events)
-            if not retry_failed:
-                yield from retry_events
-            else:
-                # Final fallback: answer directly without tools
-                direct_prompt = (
-                    f"{user_input}\n\n"
-                    "(Responde directamente desde tu conocimiento sin usar herramientas externas.)"
-                )
-                try:
-                    result = executor.invoke({"input": direct_prompt, "chat_history": chat_history})
-                    yield {"type": "final", "output": result.get("output", str(result))}
-                except Exception as e2:
-                    yield {"type": "error", "output": f"Error: {e2}"}
+            # Retry telling the model to answer directly without tools
+            direct_prompt = (
+                f"{user_input}\n\n"
+                "(Responde directamente desde tu conocimiento sin usar herramientas externas.)"
+            )
+            try:
+                result = executor.invoke({"input": direct_prompt, "chat_history": chat_history})
+                yield {"type": "final", "output": result.get("output", str(result))}
+            except Exception as e2:
+                yield {"type": "error", "output": f"Error: {e2}"}
         else:
             yield {"type": "error", "output": f"Error en el agente: {e}"}
 
